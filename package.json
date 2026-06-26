@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "postinstall": "prisma generate",
     "predeploy": "node scripts/predeploy-check.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "node scripts/safe-db-command.mjs migrate",
