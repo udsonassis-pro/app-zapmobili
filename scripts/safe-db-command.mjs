@@ -18,8 +18,9 @@ const commands = {
   },
   seed: {
     label: "seed",
-    allowedEnvironments: ["develop", "homolog"],
+    allowedEnvironments: ["develop", "homolog", "producao"],
     command: ["npx", ["tsx", "prisma/seed.ts"]],
+    requiresProductionConfirmation: true,
   },
 };
 

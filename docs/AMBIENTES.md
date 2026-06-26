@@ -83,12 +83,13 @@ npm run db:deploy -- --confirm-producao
 ## Protecoes dos comandos de banco
 
 - `npm run db:migrate` roda `prisma migrate dev` apenas em desenvolvimento.
-- `npm run db:seed` roda apenas em desenvolvimento e homologacao.
+- `npm run db:seed` roda em desenvolvimento e homologacao.
+- `npm run db:seed -- --confirm-producao` roda em producao apos confirmacao explicita.
 - `npm run db:deploy` roda em desenvolvimento e homologacao.
 - `npm run db:deploy -- --confirm-producao` roda em producao apos confirmacao.
 - Os comandos exibem apenas host e banco, nunca usuario ou senha.
 
-Nunca rode seed em producao.
+Nunca rode seed em producao sem confirmacao explicita.
 
 ## Vercel
 
