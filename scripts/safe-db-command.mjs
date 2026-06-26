@@ -18,7 +18,7 @@ const commands = {
   },
   seed: {
     label: "seed",
-    allowedEnvironments: ["develop"],
+    allowedEnvironments: ["develop", "homolog"],
     command: ["npx", ["tsx", "prisma/seed.ts"]],
   },
 };
