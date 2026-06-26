@@ -30,6 +30,20 @@ proprios ainda nao estiverem configurados.
 
 Cada projeto da Vercel deve ter seu proprio conjunto de variaveis:
 
+Se estiver usando um unico projeto Vercel com branches `main`, `develop` e
+`homolog`, use:
+
+```bash
+npm run vercel:env:sync
+```
+
+Esse comando envia:
+
+- `DATABASE_URL_PRODUCAO` para Production.
+- `DATABASE_URL_DEVELOP` para Preview da branch `develop`.
+- `DATABASE_URL_HOMOLOG` para Preview da branch `homolog`.
+- `APP_URL` e `NEXT_PUBLIC_APP_URL` usando as URLs padrao da Vercel por branch.
+
 ### zapmobili-develop
 
 - `DATABASE_URL`: credencial do banco `zapmobili_develop`.

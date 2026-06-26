@@ -31,6 +31,16 @@ npm run vercel:env -- homolog
 npm run vercel:env -- producao
 ```
 
+Para sincronizar as variaveis do `.env` local para a Vercel sem exibir os
+valores:
+
+```bash
+npm run vercel:env:sync
+```
+
+O script usa `DATABASE_URL_DEVELOP`, `DATABASE_URL_HOMOLOG` e
+`DATABASE_URL_PRODUCAO` para configurar os ambientes correspondentes.
+
 Recomendadas:
 
 - `SENTRY_DSN`

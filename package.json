@@ -18,6 +18,7 @@
     "db:use": "node scripts/use-database-url.mjs",
     "app:url": "node scripts/use-app-url.mjs",
     "vercel:env": "node scripts/vercel-env-checklist.mjs",
+    "vercel:env:sync": "node scripts/sync-vercel-env.mjs",
     "cron:setup": "node scripts/setup-cronjob-org.mjs"
   },
   "dependencies": {
