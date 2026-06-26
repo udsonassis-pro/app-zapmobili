@@ -1,0 +1,16 @@
+{
+  "name": "Zap Mobili",
+  "short_name": "Zap Mobili",
+  "description": "SaaS white-label para mobilidade urbana.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

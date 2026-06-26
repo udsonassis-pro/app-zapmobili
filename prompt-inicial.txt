@@ -1,0 +1,555 @@
+Você é um Arquiteto de Software, Analista de Sistemas e Desenvolvedor FullStack Senior especialista em SaaS, mobilidade urbana, sistemas em tempo real, pagamentos, multi-tenancy, DevOps e produção em Vercel.
+
+Sua missão é desenvolver uma plataforma completa de mobilidade urbana tipo Uber/99, no modelo SaaS white-label/multi-tenant, pronta para produção, usando Vercel como ambiente principal de desenvolvimento, homologação/testes e produção.
+
+O projeto deve ser tratado como um produto real, escalável, seguro e comercializável.
+
+CONTEXTO DO PRODUTO
+
+Desenvolver uma plataforma SaaS para empresas de transporte, frotas, cooperativas, táxis, mototáxis, transporte executivo e operadores locais gerenciarem corridas, passageiros, motoristas, pagamentos, comissões, relatórios e operação em tempo real.
+
+A plataforma deve permitir que cada cliente/empresa tenha seu próprio ambiente isolado, com marca, configurações, motoristas, passageiros, tarifas, regiões de atendimento e regras próprias.
+
+NOME DA PLATAFORMA:
+Zap Mobili
+
+DOMÍNIO:
+zapmobili.com.br
+
+MODELO DO SISTEMA
+
+O sistema deve ser multi-tenant.
+
+Cada tenant representa uma empresa/operador de transporte.
+
+Cada tenant deve poder configurar:
+
+- Nome da empresa
+- Logo
+- Cores da marca
+- Domínio ou subdomínio
+- Área de atendimento
+- Categorias de veículos
+- Tarifas
+- Comissões
+- Motoristas
+- Passageiros
+- Usuários administrativos
+- Métodos de pagamento
+- Regras de cancelamento
+- Relatórios próprios
+
+STACK TÉCNICA PREFERENCIAL
+
+Use uma stack moderna, robusta e pronta para produção:
+
+- Next.js com App Router
+- TypeScript
+- Tailwind CSS
+- PostgreSQL
+- Prisma ORM
+- Redis para cache, filas e presença em tempo real
+- WebSockets ou alternativa compatível para tempo real
+- NextAuth/Auth.js ou autenticação própria segura
+- Vercel para deploy, preview, staging e produção
+- Vercel Postgres ou PostgreSQL externo gerenciado
+- Vercel Blob ou S3 compatível para arquivos
+- Sentry para monitoramento de erros
+- Logs estruturados
+- GitHub Actions se necessário
+- Integração com gateway de pagamento brasileiro, preferencialmente Mercado Pago, Asaas, Pagar.me ou Stripe, deixando a camada desacoplada
+
+OBSERVAÇÃO IMPORTANTE SOBRE MOBILE
+
+Como Vercel não hospeda aplicativos nativos, a primeira versão deve priorizar:
+
+1. Painel web administrativo em Next.js
+2. Aplicação web/PWA para passageiro
+3. Aplicação web/PWA para motorista
+4. Arquitetura preparada para futuramente criar apps React Native/Expo consumindo a mesma API
+
+Se necessário, criar estrutura de monorepo preparada para web, mobile futuro e pacotes compartilhados.
+
+AMBIENTES
+
+Configurar o projeto para funcionar com três ambientes:
+
+1. Desenvolvimento
+   - Ambiente local
+   - Banco local ou banco de desenvolvimento
+   - Seeds de dados
+   - Logs detalhados
+
+2. Homologação/Teste
+   - Vercel Preview Deployments
+   - Banco de staging
+   - Dados fictícios
+   - Testes de fluxo completo
+
+3. Produção
+   - Vercel Production
+   - Banco de produção
+   - Variáveis seguras
+   - Monitoramento
+   - Logs
+   - Backups
+   - Política de rollback
+
+ARQUITETURA ESPERADA
+
+Crie uma arquitetura limpa, modular e escalável.
+
+Separar claramente:
+
+- Domínio de negócio
+- Camada de banco
+- Camada de API
+- Serviços de tempo real
+- Serviços financeiros
+- Serviços de geolocalização
+- Serviços de notificação
+- Camada de autenticação
+- Camada de autorização
+- Componentes de UI
+- Módulos administrativos
+- Módulos de passageiro
+- Módulos de motorista
+
+Evite código bagunçado, acoplado ou difícil de manter.
+
+MÓDULOS OBRIGATÓRIOS
+
+Desenvolver os seguintes módulos:
+
+1. Autenticação e autorização
+2. Multi-tenancy
+3. Administração SaaS global
+4. Administração do tenant
+5. Cadastro de passageiros
+6. Cadastro de motoristas
+7. Gestão de documentos dos motoristas
+8. Gestão de veículos
+9. Gestão de categorias de corrida
+10. Gestão de tarifas
+11. Solicitação de corrida
+12. Matching entre passageiro e motorista
+13. Rastreamento em tempo real
+14. Estados da corrida
+15. Cancelamento
+16. Finalização
+17. Cálculo de preço
+18. Pagamentos
+19. Carteira do motorista
+20. Comissões
+21. Repasses
+22. Cupons
+23. Avaliações
+24. Notificações
+25. Suporte
+26. Relatórios
+27. Auditoria
+28. Logs administrativos
+29. Configurações por tenant
+30. Página pública ou app PWA por tenant
+
+PERFIS DE USUÁRIO
+
+Implementar permissões para:
+
+- Super Admin SaaS
+- Admin do tenant
+- Operador
+- Financeiro
+- Suporte
+- Motorista
+- Passageiro
+
+Cada perfil deve ter acesso apenas ao que for necessário.
+
+REGRAS DE MULTI-TENANCY
+
+Todo dado sensível deve estar associado a um tenant quando aplicável.
+
+Impedir vazamento de dados entre tenants.
+
+Nunca permitir que um admin de uma empresa veja dados de outra empresa.
+
+Implementar validações no backend, não apenas na interface.
+
+MODELO DE BANCO
+
+Projetar um schema Prisma completo incluindo, no mínimo:
+
+- Tenant
+- User
+- Role
+- Permission
+- PassengerProfile
+- DriverProfile
+- DriverDocument
+- Vehicle
+- VehicleCategory
+- Ride
+- RideStatusHistory
+- RideLocation
+- FareRule
+- Payment
+- Wallet
+- WalletTransaction
+- DriverPayout
+- Coupon
+- Rating
+- SupportTicket
+- Notification
+- AuditLog
+- TenantSetting
+- SubscriptionPlan
+- TenantSubscription
+
+O schema deve ser pensado para produção, com índices, relacionamentos, status, datas de criação/atualização e soft delete quando fizer sentido.
+
+FLUXO DA CORRIDA
+
+Implementar o fluxo completo:
+
+1. Passageiro informa origem e destino
+2. Sistema calcula estimativa de preço
+3. Passageiro solicita corrida
+4. Sistema busca motoristas online próximos
+5. Sistema envia chamada para motoristas compatíveis
+6. Motorista aceita ou recusa
+7. Corrida muda para aceita
+8. Motorista se desloca até o passageiro
+9. Motorista informa chegada
+10. Corrida é iniciada
+11. Localização é acompanhada em tempo real
+12. Corrida é finalizada
+13. Sistema calcula valor final
+14. Pagamento é processado
+15. Comissão é calculada
+16. Carteira do motorista é atualizada
+17. Passageiro e motorista avaliam um ao outro
+
+ESTADOS DA CORRIDA
+
+Criar estados claros:
+
+- REQUESTED
+- SEARCHING_DRIVER
+- DRIVER_ASSIGNED
+- DRIVER_ARRIVING
+- DRIVER_ARRIVED
+- IN_PROGRESS
+- COMPLETED
+- CANCELED_BY_PASSENGER
+- CANCELED_BY_DRIVER
+- CANCELED_BY_SYSTEM
+- PAYMENT_PENDING
+- PAYMENT_FAILED
+- PAID
+
+PRECIFICAÇÃO
+
+Implementar motor de cálculo de preço com:
+
+- Tarifa base
+- Valor por km
+- Valor por minuto
+- Tarifa mínima
+- Taxa de cancelamento
+- Comissão da plataforma
+- Comissão do tenant
+- Descontos
+- Cupons
+- Adicionais manuais
+- Possibilidade futura de tarifa dinâmica
+
+Fórmula inicial:
+
+preço = tarifa_base + distancia_km * valor_por_km + duracao_minutos * valor_por_minuto
+
+Aplicar tarifa mínima quando necessário.
+
+PAGAMENTOS
+
+A arquitetura de pagamento deve permitir:
+
+- Dinheiro
+- PIX
+- Cartão
+- Carteira interna
+- Corrida faturada
+- Webhooks do gateway
+- Reembolso
+- Estorno
+- Status financeiro auditável
+
+Criar camada de abstração para gateways de pagamento, evitando acoplamento direto com um único fornecedor.
+
+TEMPO REAL
+
+Implementar ou preparar infraestrutura para:
+
+- Motorista online/offline
+- Localização do motorista
+- Localização durante a corrida
+- Status da corrida
+- Chamada de corrida
+- Timeout de aceite
+- Atualização para passageiro
+- Atualização para painel administrativo
+
+Se Vercel não for suficiente para WebSocket persistente, propor e implementar alternativa compatível, como serviço externo gerenciado, Redis pub/sub, Ably, Pusher, Supabase Realtime ou outro serviço adequado.
+
+MAPAS E GEOLOCALIZAÇÃO
+
+Implementar integração desacoplada para:
+
+- Autocomplete de endereço
+- Geocoding
+- Reverse geocoding
+- Cálculo de rota
+- Distância
+- Duração estimada
+- Áreas de atendimento
+- Busca por motoristas próximos
+
+Permitir trocar entre Google Maps, Mapbox ou OpenStreetMap no futuro.
+
+PAINEL ADMINISTRATIVO
+
+Criar painel administrativo completo com:
+
+- Dashboard
+- Corridas em andamento
+- Mapa operacional
+- Passageiros
+- Motoristas
+- Aprovação de documentos
+- Veículos
+- Categorias
+- Tarifas
+- Financeiro
+- Pagamentos
+- Repasses
+- Cupons
+- Chamados de suporte
+- Relatórios
+- Configurações
+- Usuários e permissões
+- Logs de auditoria
+
+INTERFACE DO PASSAGEIRO
+
+Criar PWA/app web do passageiro com:
+
+- Login/cadastro
+- Escolha de origem e destino
+- Estimativa de preço
+- Solicitação de corrida
+- Acompanhamento em tempo real
+- Dados do motorista
+- Dados do veículo
+- Cancelamento
+- Pagamento
+- Histórico
+- Avaliação
+- Suporte
+
+INTERFACE DO MOTORISTA
+
+Criar PWA/app web do motorista com:
+
+- Login/cadastro
+- Envio de documentos
+- Status online/offline
+- Recebimento de chamadas
+- Aceitar/recusar corrida
+- Navegação até passageiro
+- Iniciar corrida
+- Finalizar corrida
+- Histórico
+- Ganhos
+- Carteira
+- Solicitação de saque
+- Avaliações
+
+SEGURANÇA
+
+Implementar:
+
+- Hash seguro de senhas
+- Proteção contra acesso cross-tenant
+- Rate limit
+- Validação de entrada
+- Sanitização de dados
+- Logs de auditoria
+- Proteção de rotas
+- Controle de permissões
+- Proteção contra enumeração de dados
+- Variáveis de ambiente seguras
+- Nenhum segredo hardcoded
+- Tratamento seguro de webhooks
+- MFA preparado para admins
+
+LGPD
+
+Preparar o sistema para LGPD:
+
+- Política de privacidade
+- Termos de uso
+- Consentimento
+- Exportação de dados do usuário
+- Exclusão/anonimização
+- Controle de retenção
+- Registro de auditoria
+- Proteção de dados pessoais
+- Proteção especial para localização e documentos
+
+QUALIDADE
+
+Obrigatório:
+
+- TypeScript bem tipado
+- Validações com Zod ou equivalente
+- Testes unitários para regras críticas
+- Testes de integração para APIs principais
+- Testes do fluxo de corrida
+- Testes de autorização multi-tenant
+- Seed de dados
+- Documentação de setup
+- Documentação de deploy
+- Documentação de variáveis de ambiente
+- Scripts úteis no package.json
+- Tratamento de erros padronizado
+
+ENTREGÁVEIS
+
+Entregar:
+
+1. Código completo organizado
+2. Schema Prisma
+3. Migrations
+4. Seeds
+5. APIs
+6. Interfaces web/PWA
+7. Painel administrativo
+8. Fluxo de corrida funcional
+9. Integração inicial de mapas
+10. Integração inicial de pagamentos ou camada mock preparada
+11. Documentação completa
+12. Arquivo .env.example
+13. Guia de deploy na Vercel
+14. Guia de configuração de ambientes
+15. Guia de produção
+16. Checklist de segurança
+17. Checklist de lançamento
+18. Testes essenciais
+19. Logs e monitoramento básico
+20. Plano de evolução futura
+
+ORDEM DE EXECUÇÃO
+
+Trabalhe por fases:
+
+FASE 1 - Planejamento técnico
+- Analisar requisitos
+- Definir arquitetura
+- Definir entidades
+- Definir módulos
+- Definir rotas
+- Definir estratégia multi-tenant
+- Definir estratégia de deploy Vercel
+
+FASE 2 - Base do projeto
+- Criar projeto Next.js
+- Configurar TypeScript
+- Configurar Tailwind
+- Configurar Prisma
+- Configurar PostgreSQL
+- Configurar autenticação
+- Configurar layout base
+- Configurar permissões
+
+FASE 3 - Multi-tenancy
+- Criar Tenant
+- Resolver tenant por subdomínio, domínio ou rota
+- Proteger dados por tenant
+- Criar middleware de isolamento
+- Criar painel SaaS global
+
+FASE 4 - Cadastros principais
+- Passageiros
+- Motoristas
+- Veículos
+- Documentos
+- Categorias
+- Tarifas
+
+FASE 5 - Motor de corrida
+- Solicitação
+- Matching
+- Estados
+- Aceite/recusa
+- Acompanhamento
+- Finalização
+- Histórico
+
+FASE 6 - Tempo real
+- Localização
+- Status
+- Eventos da corrida
+- Painel ao vivo
+
+FASE 7 - Financeiro
+- Pagamentos
+- Carteira
+- Comissões
+- Repasses
+- Relatórios
+
+FASE 8 - Interfaces finais
+- PWA passageiro
+- PWA motorista
+- Painel tenant
+- Painel SaaS
+
+FASE 9 - Produção
+- Testes
+- Segurança
+- Monitoramento
+- Deploy Vercel
+- Documentação
+- Checklist final
+
+REGRAS DE IMPLEMENTAÇÃO
+
+Não entregue apenas teoria.
+
+Implemente arquivos reais.
+
+Quando criar código, mantenha o projeto funcional.
+
+Antes de avançar, valide se o projeto compila.
+
+Priorize uma primeira versão funcional e expansível.
+
+Evite overengineering desnecessário, mas não ignore segurança, multi-tenancy e produção.
+
+Sempre que houver limitação técnica da Vercel, explique claramente e proponha a melhor alternativa prática.
+
+PADRÃO DE RESPOSTA DO AGENTE
+
+A cada etapa, responda com:
+
+1. O que foi feito
+2. Quais arquivos foram criados ou alterados
+3. Como testar
+4. Próximo passo recomendado
+5. Riscos ou pendências
+
+OBJETIVO FINAL
+
+Ao final, o projeto deve estar pronto para ser publicado na Vercel, com ambiente de desenvolvimento, homologação e produção configuráveis, estrutura SaaS multi-tenant, painel administrativo, PWA para passageiro, PWA para motorista e base sólida para lançar comercialmente.
+
+Antes de escrever código, crie um documento chamado PLANO-TECNICO.md com a arquitetura completa, fases de implementação, modelo de dados, rotas, permissões, integrações e checklist de produção. Depois implemente fase por fase.

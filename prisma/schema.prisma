@@ -1,0 +1,692 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  CANCELED
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  BLOCKED
+}
+
+enum RoleName {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  OPERATOR
+  FINANCE
+  SUPPORT
+  DRIVER
+  PASSENGER
+}
+
+enum DriverStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DriverAvailability {
+  OFFLINE
+  ONLINE
+  BUSY
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum VehicleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  INACTIVE
+}
+
+enum RideStatus {
+  REQUESTED
+  SEARCHING_DRIVER
+  DRIVER_ASSIGNED
+  DRIVER_ARRIVING
+  DRIVER_ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED_BY_PASSENGER
+  CANCELED_BY_DRIVER
+  CANCELED_BY_SYSTEM
+  PAYMENT_PENDING
+  PAYMENT_FAILED
+  PAID
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  CARD
+  WALLET
+  INVOICED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+enum WalletTransactionType {
+  RIDE_EARNING
+  PLATFORM_FEE
+  TENANT_FEE
+  PAYOUT
+  ADJUSTMENT
+  REFUND
+}
+
+enum PayoutStatus {
+  REQUESTED
+  PROCESSING
+  PAID
+  REJECTED
+  CANCELED
+}
+
+enum CouponType {
+  FIXED
+  PERCENTAGE
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+  SMS
+}
+
+model Tenant {
+  id                 String               @id @default(cuid())
+  name               String
+  slug               String               @unique
+  domain             String?              @unique
+  logoUrl            String?
+  primaryColor       String               @default("#0f766e")
+  accentColor        String               @default("#f59e0b")
+  status             TenantStatus         @default(TRIAL)
+  serviceArea        Json?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
+  auditLogs          AuditLog[]
+  coupons            Coupon[]
+  driverDocuments    DriverDocument[]
+  driverRideDeclines DriverRideDecline[]
+  driverPayouts      DriverPayout[]
+  driverProfiles     DriverProfile[]
+  fareRules          FareRule[]
+  notifications      Notification[]
+  passengerProfiles  PassengerProfile[]
+  payments           Payment[]
+  ratings            Rating[]
+  rideLocations      RideLocation[]
+  rideStatusHistory  RideStatusHistory[]
+  rides              Ride[]
+  roles              Role[]
+  settings           TenantSetting[]
+  supportTicketEvents SupportTicketEvent[]
+  supportTickets     SupportTicket[]
+  subscriptions      TenantSubscription[]
+  users              User[]
+  vehicleCategories  VehicleCategory[]
+  vehicles           Vehicle[]
+  wallets            Wallet[]
+  walletTransactions WalletTransaction[]
+
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model TenantSetting {
+  id        String   @id @default(cuid())
+  tenantId  String
+  key       String
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+model SubscriptionPlan {
+  id            String               @id @default(cuid())
+  name          String
+  slug          String               @unique
+  monthlyPrice  Decimal              @db.Decimal(10, 2)
+  maxDrivers    Int?
+  maxRidesMonth Int?
+  features      Json
+  active        Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  subscriptions TenantSubscription[]
+}
+
+model TenantSubscription {
+  id                 String           @id @default(cuid())
+  tenantId           String
+  planId             String
+  status             TenantStatus     @default(TRIAL)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  plan               SubscriptionPlan @relation(fields: [planId], references: [id])
+  tenant             Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([planId])
+}
+
+model User {
+  id               String            @id @default(cuid())
+  tenantId         String?
+  name             String
+  email            String            @unique
+  passwordHash     String
+  phone            String?
+  status           UserStatus        @default(ACTIVE)
+  lastLoginAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  auditLogs        AuditLog[]
+  driverProfile    DriverProfile?
+  notifications    Notification[]
+  passengerProfile PassengerProfile?
+  roles            Role[]
+  tenant           Tenant?           @relation(fields: [tenantId], references: [id])
+  supportTicketEvents SupportTicketEvent[] @relation("SupportTicketEventActor")
+  supportTickets   SupportTicket[]   @relation("TicketRequester")
+
+  @@index([tenantId])
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  tenantId    String?
+  userId      String
+  name        RoleName
+  createdAt   DateTime     @default(now())
+  permissions Permission[]
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, name])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  roleId    String
+  action    String
+  subject   String
+  createdAt DateTime @default(now())
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, action, subject])
+}
+
+model PassengerProfile {
+  id        String    @id @default(cuid())
+  tenantId  String
+  userId    String    @unique
+  document  String?
+  birthDate DateTime?
+  rating    Decimal   @default(5.0) @db.Decimal(3, 2)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  ratings   Rating[]  @relation("PassengerRatings")
+  rides     Ride[]
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([deletedAt])
+}
+
+model DriverProfile {
+  id             String             @id @default(cuid())
+  tenantId       String
+  userId         String             @unique
+  document       String?
+  licenseNumber  String?
+  status         DriverStatus       @default(PENDING)
+  availability   DriverAvailability @default(OFFLINE)
+  currentLat     Decimal?           @db.Decimal(10, 7)
+  currentLng     Decimal?           @db.Decimal(10, 7)
+  rating         Decimal            @default(5.0) @db.Decimal(3, 2)
+  approvedAt     DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+  documents      DriverDocument[]
+  declines       DriverRideDecline[]
+  payouts        DriverPayout[]
+  ratings        Rating[]           @relation("DriverRatings")
+  rides          Ride[]
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicles       Vehicle[]
+  wallet         Wallet?
+
+  @@index([tenantId, availability])
+  @@index([tenantId, status])
+  @@index([deletedAt])
+}
+
+model DriverDocument {
+  id         String         @id @default(cuid())
+  tenantId   String
+  driverId   String
+  type       String
+  fileUrl    String
+  status     DocumentStatus @default(PENDING)
+  expiresAt  DateTime?
+  reviewedAt DateTime?
+  reviewNote String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  driver     DriverProfile  @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  tenant     Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([driverId])
+}
+
+model Vehicle {
+  id           String          @id @default(cuid())
+  tenantId     String
+  driverId     String
+  categoryId   String
+  brand        String
+  model        String
+  plate        String
+  color        String
+  year         Int
+  status       VehicleStatus   @default(PENDING)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+  category     VehicleCategory @relation(fields: [categoryId], references: [id])
+  driver       DriverProfile   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  rides        Ride[]
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, plate])
+  @@index([tenantId, status])
+  @@index([driverId])
+}
+
+model VehicleCategory {
+  id              String     @id @default(cuid())
+  tenantId        String
+  name            String
+  slug            String
+  description     String?
+  seats           Int        @default(4)
+  acceptsMoto     Boolean    @default(false)
+  active          Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  fareRules       FareRule[]
+  rides           Ride[]
+  tenant          Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicles        Vehicle[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, active])
+}
+
+model FareRule {
+  id                     String          @id @default(cuid())
+  tenantId               String
+  vehicleCategoryId      String
+  name                   String
+  baseFare               Decimal         @db.Decimal(10, 2)
+  pricePerKm             Decimal         @db.Decimal(10, 2)
+  pricePerMinute         Decimal         @db.Decimal(10, 2)
+  minimumFare            Decimal         @db.Decimal(10, 2)
+  cancellationFee        Decimal         @default(0) @db.Decimal(10, 2)
+  platformCommissionRate Decimal         @default(0) @db.Decimal(5, 4)
+  tenantCommissionRate   Decimal         @default(0) @db.Decimal(5, 4)
+  active                 Boolean         @default(true)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  tenant                 Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicleCategory        VehicleCategory @relation(fields: [vehicleCategoryId], references: [id])
+
+  @@index([tenantId, active])
+  @@index([vehicleCategoryId])
+}
+
+model Ride {
+  id                  String              @id @default(cuid())
+  tenantId            String
+  passengerId         String
+  driverId            String?
+  vehicleId           String?
+  vehicleCategoryId   String
+  status              RideStatus          @default(REQUESTED)
+  originAddress       String
+  originLat           Decimal             @db.Decimal(10, 7)
+  originLng           Decimal             @db.Decimal(10, 7)
+  destinationAddress  String
+  destinationLat      Decimal             @db.Decimal(10, 7)
+  destinationLng      Decimal             @db.Decimal(10, 7)
+  estimatedDistanceKm Decimal             @db.Decimal(10, 2)
+  estimatedDurationMin Int
+  estimatedPrice      Decimal             @db.Decimal(10, 2)
+  finalDistanceKm     Decimal?            @db.Decimal(10, 2)
+  finalDurationMin    Int?
+  finalPrice          Decimal?            @db.Decimal(10, 2)
+  platformCommission  Decimal?            @db.Decimal(10, 2)
+  tenantCommission    Decimal?            @db.Decimal(10, 2)
+  paymentMethod       PaymentMethod
+  requestedAt         DateTime            @default(now())
+  acceptedAt          DateTime?
+  startedAt           DateTime?
+  completedAt         DateTime?
+  canceledAt          DateTime?
+  cancelReason        String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  couponUsages        CouponUsage[]
+  driverDeclines      DriverRideDecline[]
+  driver              DriverProfile?      @relation(fields: [driverId], references: [id])
+  locations           RideLocation[]
+  passenger           PassengerProfile    @relation(fields: [passengerId], references: [id])
+  payments            Payment[]
+  ratings             Rating[]
+  supportTickets      SupportTicket[]
+  statusHistory       RideStatusHistory[]
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicle             Vehicle?            @relation(fields: [vehicleId], references: [id])
+  vehicleCategory     VehicleCategory     @relation(fields: [vehicleCategoryId], references: [id])
+
+  @@index([tenantId, status])
+  @@index([tenantId, requestedAt])
+  @@index([passengerId])
+  @@index([driverId])
+}
+
+model RideStatusHistory {
+  id        String     @id @default(cuid())
+  tenantId  String
+  rideId    String
+  from      RideStatus?
+  to        RideStatus
+  reason    String?
+  createdBy String?
+  createdAt DateTime   @default(now())
+  ride      Ride       @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, rideId])
+}
+
+model DriverRideDecline {
+  id        String        @id @default(cuid())
+  tenantId  String
+  rideId    String
+  driverId  String
+  reason    String?
+  createdAt DateTime      @default(now())
+  driver    DriverProfile @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  ride      Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([rideId, driverId])
+  @@index([tenantId, driverId])
+  @@index([tenantId, rideId])
+}
+
+model RideLocation {
+  id        String   @id @default(cuid())
+  tenantId  String
+  rideId    String
+  driverId  String?
+  lat       Decimal  @db.Decimal(10, 7)
+  lng       Decimal  @db.Decimal(10, 7)
+  heading   Decimal? @db.Decimal(6, 2)
+  speedKmh  Decimal? @db.Decimal(6, 2)
+  createdAt DateTime @default(now())
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, rideId, createdAt])
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  tenantId       String
+  rideId         String
+  provider       String
+  providerRef    String?
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  amount         Decimal       @db.Decimal(10, 2)
+  metadata       Json?
+  paidAt         DateTime?
+  failedReason   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  ride           Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([rideId])
+}
+
+model Wallet {
+  id           String              @id @default(cuid())
+  tenantId     String
+  driverId     String              @unique
+  balance      Decimal             @default(0) @db.Decimal(10, 2)
+  blockedAmount Decimal            @default(0) @db.Decimal(10, 2)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  driver       DriverProfile       @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@index([tenantId])
+}
+
+model WalletTransaction {
+  id          String                @id @default(cuid())
+  tenantId    String
+  walletId    String
+  rideId      String?
+  type        WalletTransactionType
+  amount      Decimal               @db.Decimal(10, 2)
+  description String
+  createdAt   DateTime              @default(now())
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  wallet      Wallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([walletId])
+}
+
+model DriverPayout {
+  id          String        @id @default(cuid())
+  tenantId    String
+  driverId    String
+  amount      Decimal       @db.Decimal(10, 2)
+  status      PayoutStatus  @default(REQUESTED)
+  requestedAt DateTime      @default(now())
+  paidAt      DateTime?
+  metadata    Json?
+  driver      DriverProfile @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([driverId])
+}
+
+model Coupon {
+  id          String        @id @default(cuid())
+  tenantId    String
+  code        String
+  type        CouponType
+  value       Decimal       @db.Decimal(10, 2)
+  maxDiscount Decimal?      @db.Decimal(10, 2)
+  startsAt    DateTime
+  endsAt      DateTime
+  usageLimit  Int?
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  usages      CouponUsage[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, active])
+}
+
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  rideId    String
+  discount  Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, rideId])
+}
+
+model Rating {
+  id          String            @id @default(cuid())
+  tenantId    String
+  rideId      String
+  passengerId String?
+  driverId    String?
+  score       Int
+  comment     String?
+  createdAt   DateTime          @default(now())
+  driver      DriverProfile?    @relation("DriverRatings", fields: [driverId], references: [id])
+  passenger   PassengerProfile? @relation("PassengerRatings", fields: [passengerId], references: [id])
+  ride        Ride              @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, rideId])
+  @@index([driverId])
+  @@index([passengerId])
+}
+
+model SupportTicket {
+  id          String              @id @default(cuid())
+  tenantId    String
+  requesterId String
+  rideId      String?
+  subject     String
+  status      SupportTicketStatus @default(OPEN)
+  priority    Int                 @default(2)
+  description String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  requester   User                @relation("TicketRequester", fields: [requesterId], references: [id])
+  ride        Ride?               @relation(fields: [rideId], references: [id], onDelete: SetNull)
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  events      SupportTicketEvent[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, rideId])
+  @@index([requesterId])
+}
+
+model SupportTicketEvent {
+  id           String               @id @default(cuid())
+  tenantId     String
+  ticketId     String
+  actorId      String?
+  action       String
+  fromStatus   SupportTicketStatus?
+  toStatus     SupportTicketStatus?
+  fromPriority Int?
+  toPriority   Int?
+  note         String?
+  createdAt    DateTime             @default(now())
+  actor        User?                @relation("SupportTicketEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ticket       SupportTicket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([ticketId, createdAt])
+  @@index([actorId])
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  tenantId  String?
+  userId    String?
+  channel   NotificationChannel @default(IN_APP)
+  title     String
+  body      String
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime            @default(now())
+  tenant    Tenant?             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([userId, readAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  userId    String?
+  action    String
+  subject   String
+  subjectId String?
+  ip        String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@index([subject, subjectId])
+}
