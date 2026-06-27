@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 type RideCreated = {
@@ -141,9 +142,18 @@ export function RequestRideForm({ categories }: RequestRideFormProps) {
       ) : null}
 
       {ride ? (
-        <div className="mt-5 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-800">
-          Corrida criada: <strong>{ride.id}</strong>. Status:{" "}
-          <strong>{ride.status}</strong>. Categoria: <strong>{ride.category}</strong>.
+        <div className="mt-5 grid gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+          <p>
+            Corrida criada: <strong>{ride.id}</strong>. Status:{" "}
+            <strong>{ride.status}</strong>. Categoria:{" "}
+            <strong>{ride.category}</strong>.
+          </p>
+          <Link
+            href={`/rides/${ride.id}`}
+            className="w-fit rounded-lg bg-teal-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-teal-800"
+          >
+            Abrir corrida e suporte
+          </Link>
         </div>
       ) : null}
 
